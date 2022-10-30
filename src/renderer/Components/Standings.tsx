@@ -74,7 +74,7 @@ function Standings() {
   };
 
   useEffect(() => {
-    const newSocket = io(`http://${window.location.hostname}:3001`, {});
+    const newSocket = io(`http://localhost:3001`, {});
     // newSocket.on()
     setSocket(newSocket as unknown as any);
     // return () => newSocket.close();
@@ -101,6 +101,8 @@ function Standings() {
     socket?.on('lapData', lapDataListener);
     socket?.on('connect', () => {
       console.log('connect');
+      console.log('LAPS DATA', lapData);
+
       findBestSectors(lapData);
       socket?.emit('getLapData');
     });
@@ -114,7 +116,7 @@ function Standings() {
 
   return (
     <div className="App">
-      {socket ? (
+      {socket?.active ? (
         <div className="chat-container">
           <div className="resultsarchive-wrapper">
             <div className="resultsarchive-content-header">
@@ -127,9 +129,18 @@ function Standings() {
                 type="button"
                 onClick={() => {
                   socket?.emit('removeLaps');
+                  setLapData([]);
                 }}
               >
                 Obriši podatke
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  socket?.emit('removeUsers');
+                }}
+              >
+                Obriši korisnike
               </button>
             </div>
             <div className="resultsarchive-content">

@@ -8,28 +8,34 @@
  * When running `npm run build` or `npm run build:main`, this file is compiled to
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
-import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
-import { autoUpdater } from 'electron-updater';
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import log from 'electron-log';
+import { autoUpdater } from 'electron-updater';
+import path from 'path';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+
+const ProgressBar = require('electron-progressbar');
 
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
     autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.autoDownload = false;
+    autoUpdater.checkForUpdates();
   }
 }
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-  require('./standings');
+app.commandLine.appendSwitch('remote-debugging-port', '9222');
+
+ipcMain.on('app-version', (event) => {
+  event.reply('app-version', { version: app.getVersion() });
+});
+
+ipcMain.on('restart_app', () => {
+  autoUpdater.quitAndInstall();
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -91,6 +97,7 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
+      require('./standings');
       mainWindow.show();
     }
   });
@@ -136,3 +143,68 @@ app
     });
   })
   .catch(console.log);
+
+// Auto updater events (optional)
+let progressBar: typeof ProgressBar | null = null;
+autoUpdater.on('update-available', (ev, info) => {
+  dialog
+    .showMessageBox({
+      type: 'info',
+      title: 'Found Updates',
+      message: `Found updates, do you want update now?`,
+      buttons: ['Sure', 'No'],
+    })
+    .then((res) => {
+      if (res.response === 0) {
+        autoUpdater.downloadUpdate();
+      }
+    })
+    .catch((error) => dialog.showErrorBox('Error', error));
+});
+autoUpdater.on('update-not-available', (ev, info) => {});
+autoUpdater.on('error', (ev, err) => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Error',
+    message: `Error, while checking for updates. ${err}`,
+  });
+});
+autoUpdater.on('download-progress', (progressObj) => {
+  const logMessage = `Downloading ${Math.round(progressObj.percent)}%`;
+  if (progressBar === null) {
+    progressBar = new ProgressBar({
+      indeterminate: false,
+      text: 'Downloading new version...',
+      detail: 'Wait...',
+    });
+  } else {
+    progressBar.value = progressObj.percent;
+    progressBar.detail = logMessage;
+  }
+});
+autoUpdater.on('update-downloaded', (ev, info) => {
+  // Wait 5 seconds, then quit and install
+  // In your application, you don't need to wait 5 seconds.
+  // You could call autoUpdater.quitAndInstall(); immediately
+  dialog.showMessageBoxSync({
+    type: 'info',
+    title: 'Update downloaded',
+    message: 'Update downloaded, application will quit for update...',
+  });
+  autoUpdater.quitAndInstall();
+});
+
+if (progressBar) {
+  progressBar
+    .on('completed', () => {
+      progressBar.detail = 'Task completed. Exiting...';
+    })
+    .on('aborted', (value: string) => {
+      console.info(`aborted... ${value}`);
+    })
+    .on('progress', (value: number) => {
+      progressBar.detail = `Value ${value} out of ${
+        progressBar.getOptions().maxValue
+      }...`;
+    });
+}

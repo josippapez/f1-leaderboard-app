@@ -26,7 +26,7 @@ function Admin() {
   // const [lapData, setLapData] = useState<Lap[]>([]);
 
   useEffect(() => {
-    const newSocket = io(`http://${window.location.hostname}:3001`, {});
+    const newSocket = io(`http://localhost:3001`, {});
     // newSocket.on()
     setSocket(newSocket as unknown as any);
     // return () => newSocket.close();
@@ -34,12 +34,9 @@ function Admin() {
 
   useEffect(() => {
     const listOfUsersListener = (listOfUsers: User[]) => {
-      setUsers(() => {
-        // const newMessages = {...prevMessages};
-        // delete newMessages[messageID];
-        // console.log(users)
-        return listOfUsers;
-      });
+      console.log('LIST OF USERS', listOfUsers);
+
+      setUsers(listOfUsers);
     };
 
     // socket?.on('lapFinished', lapFinishedListener);

@@ -68,4 +68,11 @@
   <body>
     <div id="root"></div>
   </body>
+  <script>
+    window.electron.ipcRenderer.once('app-version', (arg) => {
+      // eslint-disable-next-line no-console
+      console.log(arg.version);
+    });
+    window.electron.ipcRenderer.checkVersion();
+  </script>
 </html>

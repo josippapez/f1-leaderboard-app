@@ -1,5 +1,5 @@
+import Store from 'electron-store';
 import { constants, F1TelemetryClient } from 'f1-telemetry-client';
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import moment from 'moment';
 // or: const { F1TelemetryClient, constants } = require('f1-telemetry-client');
 
@@ -53,6 +53,8 @@ import { Server } from 'socket.io';
 
 const server = require('http').createServer();
 
+const store = new Store();
+
 const io = new Server(server, {
   cors: { origin: 'http://localhost:1212', methods: ['GET', 'POST'] },
 });
@@ -67,38 +69,24 @@ const client = new F1TelemetryClient({
 });
 
 function loadUsers() {
-  try {
-    return JSON.parse(
-      readFileSync('users.json', { encoding: 'utf-8' }).toString()
-    );
-  } catch (error) {
-    return [];
-  }
+  return store.get('users', []) as User[];
 }
 
 function loadLaps() {
-  try {
-    return JSON.parse(
-      readFileSync('laps.json', { encoding: 'utf-8' }).toString()
-    );
-  } catch (error) {
-    return [];
-  }
+  return store.get('laps', []) as LapResult[];
 }
 
+console.log(store.get('users', []), store.get('laps', []));
+
 let laps: LapResult[] = loadLaps();
-const users: User[] = loadUsers();
+let users: User[] = loadUsers();
 
 function saveLaps() {
-  writeFileSync('laps.json', JSON.stringify(laps, null, 2), {
-    encoding: 'utf-8',
-  });
+  store.set('laps', laps);
 }
 
 function saveUsers() {
-  writeFileSync('users.json', JSON.stringify(users, null, 2), {
-    encoding: 'utf-8',
-  });
+  store.set('users', users);
 }
 
 // and when you want to stop:
@@ -189,19 +177,19 @@ const generateStandings = (): {
     const sector3Time = lap.time - lap.sector1Time - lap.sector2Time;
     lap.sector3Time = sector3Time;
     if (!lap.finished) {
-      break;
+      continue;
     }
     if (!lap.valid) {
-      break;
+      continue;
     }
 
     if (!lap.driverId) {
-      break;
+      continue;
     }
     // console.log({users, lap})
     const user = users.find((u) => u.id === lap.driverId);
     if (user?.softDeleted) {
-      break;
+      continue;
     }
 
     if (lap.time < (results[lap.driverId].timeMs ?? 100000000)) {
@@ -287,13 +275,13 @@ const generateStandings = (): {
 
     if (!element.timeMs) {
       element.pos = '-';
-      break;
+      continue;
     }
 
     if (index === 0) {
       element.pos = pos.toString();
       // pos++;
-      break;
+      continue;
     }
     if (element.timeMs === standings[index - 1].timeMs) {
       element.pos = pos.toString();
@@ -302,17 +290,19 @@ const generateStandings = (): {
       element.pos = pos.toString();
     }
   }
-
   return standings;
 };
 
+function removeUsers() {
+  if (store.get('users', null)) {
+    store.set('users', null);
+    users = [];
+    store.get('users');
+  }
+}
 function removeLaps() {
-  client.stop();
-  if (existsSync('laps.json')) {
-    unlinkSync('laps.json');
-    writeFileSync('laps.json', [].toString(), {
-      encoding: 'utf-8',
-    });
+  if (store.get('laps', null)) {
+    store.set('laps', []);
     laps = [
       {
         id: 0,
@@ -327,6 +317,7 @@ function removeLaps() {
         driverId: 0,
       },
     ];
+    store.get('laps');
   }
 }
 
@@ -375,9 +366,9 @@ io.on('connection', (socket) => {
       softDeleted: false,
       avatarSeed: name, // `${name}${Math.round(Math.random() * 1000000)}`
     });
+    store.set('users', users);
 
     const standings = generateStandings();
-    console.log('OVDJE', standings);
 
     io.sockets.emit('listOfUsers', listOfUsersFormatted());
     io.sockets.emit('lapData', standings);
@@ -404,6 +395,13 @@ io.on('connection', (socket) => {
   socket.on('removeLaps', () => {
     console.log('removing Laps');
     removeLaps();
+  });
+
+  socket.on('removeUsers', () => {
+    const standings = generateStandings();
+    io.sockets.emit('lapData', standings);
+    console.log('removing Users');
+    removeUsers();
   });
 
   // socket.emit("lapData", laps)
@@ -616,6 +614,8 @@ function log(what: string, name: string) {
 
           // previousLap.team = currentTeam;
           // console.log({previousLap})
+          console.log('PREV LAP', previousLap);
+
           io.sockets.emit('lapFinished', previousLap);
           io.sockets.emit('listOfUsers', listOfUsersFormatted());
           saveLaps();
@@ -632,6 +632,7 @@ function log(what: string, name: string) {
 
 // log(PACKETS.carTelemetry, "CAR_TELEMATRY");
 // log(PACKETS.session, "SESSION");
+
 log(PACKETS.lapData, 'LAP_DATA');
 setInterval(() => {
   saveLaps();

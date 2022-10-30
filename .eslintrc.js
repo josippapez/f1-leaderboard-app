@@ -9,6 +9,8 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     'no-plusplus': 'off',
     'no-restricted-syntax': 'off',
+    'no-continue': 'off',
+    'no-unused-vars': 'warn',
   },
   parserOptions: {
     ecmaVersion: 2020,
