@@ -1,62 +1,123 @@
-/*
- * @NOTE: Prepend a `~` to css file paths that are in your node_modules
- *        See https://github.com/webpack-contrib/sass-loader#imports
- */
+.adminfix td:nth-of-type(3) {
+  width: 10%;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.adminfix td:nth-of-type(4) {
+  width: 10%;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.adminfix td:nth-of-type(5) {
+  width: 20%;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.resultsarchive-wrapper.adminfix {
+  width: 960px;
+  margin: 0 auto;
+}
+
+.resultsarchive-wrapper {
+  background-color: #333333;
+}
+
+.ResultsArchiveTitle,
+.resultsarchive-content {
+  color: white !important;
+}
+
+button.setdriver {
+  background-color: orange;
+  width: 200px;
+}
+button.setdriver:hover {
+  background-color: green;
+}
+
+button.setdriver.selected {
+  background-color: green;
+}
+
+button.blue {
+  background-color: blue;
+}
+button.blue:hover {
+  background-color: darkblue;
+}
+
+button.red {
+  background-color: red;
+}
+button.red:hover {
+  background-color: darkred;
+}
+
+button.red:disabled {
+  background-color: lightpink;
+}
+
+.logo {
+  width: 50px;
+  margin: -14px;
+}
+
+.resultsarchive-table td:nth-child(2) {
+  width: 10%;
+}
+
+.resultsarchive-table td:nth-child(3) {
+  width: 70px;
+}
+
+.resultsarchive-table td:nth-child(5) {
+  width: 25%;
+}
+
+.resultsarchive-table td:nth-child(6) {
+  width: 15%;
+}
+
+.resultsarchive-table td {
+  font-size: 2rem;
+}
+
+.resultsarchive-table tbody tr td {
+  color: white !important;
+}
+
+.resultsarchive-table tbody tr:nth-child(2n + 1) {
+  background: #242424;
+}
+
+.resultsarchive-table tbody tr:nth-child(2n) {
+  background: #424242;
+}
+
 body {
-  position: relative;
+  background-color: #333333;
+}
+
+.top-bar {
+  display: flex;
+}
+
+.ResultsArchiveTitle {
+  width: auto !important;
+  margin-right: 50px;
+}
+
+.current-time-counter {
   color: white;
-  height: 100vh;
-  background: linear-gradient(
-    200.96deg,
-    #fedc2a -29.09%,
-    #dd5789 51.77%,
-    #7a2c9e 129.35%
-  );
-  font-family: sans-serif;
-  overflow-y: hidden;
+  font-size: 4rem;
+  font-weight: bold;
+  margin-top: -10px;
+  margin-left: -10px;
+}
+
+#timer {
   display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-button {
-  background-color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
-  border: none;
-  appearance: none;
-  font-size: 1.3rem;
-  box-shadow: 0px 8px 28px -6px rgba(24, 39, 75, 0.12),
-    0px 18px 88px -4px rgba(24, 39, 75, 0.14);
-  transition: all ease-in 0.1s;
-  cursor: pointer;
-  opacity: 0.9;
-}
-
-button:hover {
-  transform: scale(1.05);
-  opacity: 1;
-}
-
-li {
-  list-style: none;
-}
-
-a {
-  text-decoration: none;
-  height: fit-content;
-  width: fit-content;
-  margin: 10px;
-}
-
-a:hover {
-  opacity: 1;
-  text-decoration: none;
-}
-
-.Hello {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 20px 0;
+  justify-content: space-evenly;
+  width: 100%;
 }
