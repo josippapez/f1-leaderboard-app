@@ -74,7 +74,7 @@ function Standings() {
   };
 
   useEffect(() => {
-    const newSocket = io(`http://localhost:3001`, {});
+    const newSocket = io(`http://localhost:3325`, {});
     // newSocket.on()
     setSocket(newSocket as unknown as any);
     // return () => newSocket.close();

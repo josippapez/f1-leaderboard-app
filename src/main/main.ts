@@ -13,6 +13,7 @@ import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import MenuBuilder from './menu';
+import { start, stop } from './standings';
 import { resolveHtmlPath } from './util';
 
 const ProgressBar = require('electron-progressbar');
@@ -97,6 +98,7 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
+      start();
       require('./standings');
       mainWindow.show();
     }
@@ -128,6 +130,7 @@ app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {
+    stop();
     app.quit();
   }
 });

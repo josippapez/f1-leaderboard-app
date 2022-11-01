@@ -56,9 +56,11 @@ const server = require('http').createServer();
 const store = new Store();
 
 const io = new Server(server, {
-  cors: { origin: 'http://localhost:1212', methods: ['GET', 'POST'] },
+  cors: {
+    origin: `http://localhost:${process.env.PORT || 1212}`,
+    methods: ['GET', 'POST'],
+  },
 });
-io.listen(3001);
 
 const { PACKETS } = constants;
 
@@ -303,20 +305,7 @@ function removeUsers() {
 function removeLaps() {
   if (store.get('laps', null)) {
     store.set('laps', []);
-    laps = [
-      {
-        id: 0,
-        lapId: 0,
-        time: 0,
-        sector1Time: 0,
-        sector2Time: 0,
-        sector3Time: 0,
-        valid: true,
-        finished: false,
-        lastFrameIdentifier: 0,
-        driverId: 0,
-      },
-    ];
+    laps = [];
     store.get('laps');
   }
 }
@@ -580,7 +569,7 @@ function log(what: string, name: string) {
     } else {
       const lastLap: LapResult = laps[laps.length - 1];
 
-      if (lastLap.lapId === lapNumber) {
+      if (lastLap && lastLap.lapId === lapNumber) {
         lastLap.time = time * 1000;
         lastLap.sector1Time = sector1Time;
         lastLap.sector2Time = sector2Time;
@@ -614,7 +603,6 @@ function log(what: string, name: string) {
 
           // previousLap.team = currentTeam;
           // console.log({previousLap})
-          console.log('PREV LAP', previousLap);
 
           io.sockets.emit('lapFinished', previousLap);
           io.sockets.emit('listOfUsers', listOfUsersFormatted());
@@ -633,10 +621,23 @@ function log(what: string, name: string) {
 // log(PACKETS.carTelemetry, "CAR_TELEMATRY");
 // log(PACKETS.session, "SESSION");
 
-log(PACKETS.lapData, 'LAP_DATA');
-setInterval(() => {
-  saveLaps();
-  saveUsers();
-}, 5 * 1000);
-// to start listening:
-client.start();
+let interval: null | ReturnType<typeof setInterval> = null;
+
+function start() {
+  log(PACKETS.lapData, 'LAP_DATA');
+  interval = setInterval(() => {
+    saveLaps();
+    saveUsers();
+  }, 5 * 1000);
+  io.listen(3325);
+  client.start();
+}
+function stop() {
+  if (interval) {
+    clearInterval(interval);
+  }
+  io.close();
+  client.stop();
+}
+
+export { start, stop, io, client, listOfUsersFormatted };
