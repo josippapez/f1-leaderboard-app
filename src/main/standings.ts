@@ -1,6 +1,6 @@
 import Store from 'electron-store';
-import { constants, F1TelemetryClient } from 'f1-telemetry-client';
-import moment from 'moment';
+import { constants, F1TelemetryClient } from '@racehub-io/f1-telemetry-client';
+import dayjs from 'dayjs';
 // or: const { F1TelemetryClient, constants } = require('f1-telemetry-client');
 
 // const TEAMS = {
@@ -226,7 +226,7 @@ const generateStandings = (): {
 
   for (const driverId of Object.keys(results)) {
     if (results[driverId].timeMs) {
-      results[driverId].time = moment(results[driverId].timeMs).format(
+      results[driverId].time = dayjs(results[driverId].timeMs).format(
         'm:ss.SSS'
       );
     } else {
@@ -234,7 +234,7 @@ const generateStandings = (): {
     }
 
     if (results[driverId].sector1TimeMs) {
-      results[driverId].sector1Time = moment(
+      results[driverId].sector1Time = dayjs(
         results[driverId].sector1TimeMs
       ).format('m:ss.SSS');
     } else {
@@ -242,7 +242,7 @@ const generateStandings = (): {
     }
 
     if (results[driverId].sector2TimeMs) {
-      results[driverId].sector2Time = moment(
+      results[driverId].sector2Time = dayjs(
         results[driverId].sector2TimeMs
       ).format('m:ss.SSS');
     } else {
@@ -250,7 +250,7 @@ const generateStandings = (): {
     }
 
     if (results[driverId].sector3TimeMs) {
-      results[driverId].sector3Time = moment(
+      results[driverId].sector3Time = dayjs(
         results[driverId].sector3TimeMs
       ).format('m:ss.SSS');
     } else {
@@ -261,8 +261,8 @@ const generateStandings = (): {
       const diff = results[driverId].timeMs - fastestTime;
       results[driverId].diff =
         diff < 60 * 1000
-          ? `+${moment(diff).format('s.SSS')}`
-          : `+${moment(diff).format('m:ss.SSS')}`;
+          ? `+${dayjs(diff).format('s.SSS')}`
+          : `+${dayjs(diff).format('m:ss.SSS')}`;
     }
   }
   // console.log("generateStandings", Object.values(results).sort((a, b) => (a.timeMs || 100000000) - (b.timeMs || 100000000)))
@@ -528,18 +528,18 @@ function log(what: string, name: string) {
     io.sockets.emit(
       'timer',
       `
-      <div class='current-time-counter'>${moment(time * 1000).format(
+      <div class='current-time-counter'>${dayjs(time * 1000).format(
         'm:ss.SSS'
       )}</div>
-      <div class='current-time-counter'>S1: ${moment(sector1Time).format(
+      <div class='current-time-counter'>S1: ${dayjs(sector1Time).format(
         'm:ss.SSS'
       )}</div>
-      <div class='current-time-counter'>S2: ${moment(sector2Time).format(
+      <div class='current-time-counter'>S2: ${dayjs(sector2Time).format(
         'm:ss.SSS'
       )}</div>
       <div class='current-time-counter'>S3: ${
         sector1Time && sector2Time
-          ? moment(time * 1000 - (sector1Time + sector2Time)).format('m:ss.SSS')
+          ? dayjs(time * 1000 - (sector1Time + sector2Time)).format('m:ss.SSS')
           : '0:00.000'
       }</div>
       `
