@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install --network-timeout=30000
+          npm install -f --network-timeout=30000
 
       - name: Publish releases ubuntu
         if: matrix.os == 'ubuntu-latest'
