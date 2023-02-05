@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          yarn install
+          yarn install --network-timeout=30000
 
       - name: Publish releases ubuntu
         if: matrix.os == 'ubuntu-latest'
