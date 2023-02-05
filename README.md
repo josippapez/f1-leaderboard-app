@@ -30,6 +30,13 @@ cd your-project-name
 npm install
 ```
 
+If running on windows and error for port taken occurs, try running the following command:
+
+```bash
+net stop winnat
+net start winnat
+```
+
 **Having issues installing? See our [debugging guide](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/400)**
 
 ## Starting Development

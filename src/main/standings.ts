@@ -1,6 +1,8 @@
-import Store from 'electron-store';
-import { constants, F1TelemetryClient } from '@racehub-io/f1-telemetry-client';
+import { F1TelemetryClient, constants } from '@racehub-io/f1-telemetry-client';
 import dayjs from 'dayjs';
+import Store from 'electron-store';
+import { Server } from 'socket.io';
+
 // or: const { F1TelemetryClient, constants } = require('f1-telemetry-client');
 
 // const TEAMS = {
@@ -49,7 +51,41 @@ import dayjs from 'dayjs';
 //   29: "Jeddah",
 // }
 
-import { Server } from 'socket.io';
+interface Lap {
+  id: number;
+  time: number;
+  name: string;
+  team: string;
+  diff: string;
+}
+
+interface LapResult {
+  id: number;
+  lapId: number;
+  time: number;
+  sector1Time: number;
+  sector2Time: number;
+  sector3Time?: number;
+  // team?: string;
+  valid: boolean;
+  finished: boolean;
+  lastFrameIdentifier: number;
+  driverId?: number;
+}
+
+export interface User {
+  id: number;
+  // lapId: number;
+  // time: number;
+  // valid: boolean;
+  // finished: boolean;
+  // lastFrameIdentifier: number;
+  name: string;
+  avatarSeed: string;
+  // hasRecord: boolean;
+  selected: boolean;
+  softDeleted: boolean;
+}
 
 const server = require('http').createServer();
 
@@ -373,12 +409,9 @@ io.on('connection', (socket) => {
       return;
     }
     users[index].softDeleted = true;
-    // users.splice(index, 1);
     const standings = generateStandings();
-    // sockets.forEach(s => {
     io.sockets.emit('listOfUsers', listOfUsersFormatted());
     io.sockets.emit('lapData', standings);
-    // })
   });
 
   socket.on('removeLaps', () => {
@@ -393,94 +426,13 @@ io.on('connection', (socket) => {
     removeUsers();
   });
 
-  // socket.emit("lapData", laps)
-  // new Connection(io, socket);
   sockets.push(socket);
 });
-// sockets.forEach(socket =>     socket.emit("lapData", [])
-// )
-// const resultsNamespace = io.of("/results");
-
-interface Lap {
-  id: number;
-  time: number;
-  name: string;
-  team: string;
-  diff: string;
-}
-
-interface LapResult {
-  id: number;
-  lapId: number;
-  time: number;
-  sector1Time: number;
-  sector2Time: number;
-  sector3Time?: number;
-  // team?: string;
-  valid: boolean;
-  finished: boolean;
-  lastFrameIdentifier: number;
-  driverId?: number;
-}
-
-export interface User {
-  id: number;
-  // lapId: number;
-  // time: number;
-  // valid: boolean;
-  // finished: boolean;
-  // lastFrameIdentifier: number;
-  name: string;
-  avatarSeed: string;
-  // hasRecord: boolean;
-  selected: boolean;
-  softDeleted: boolean;
-}
-
-// io.emit("lapData", laps)
-function exitHandler(options: any, exitCode: any) {
-  saveLaps();
-  saveUsers();
-  if (options.cleanup) console.log('clean');
-  if (exitCode || exitCode === 0) console.log(exitCode);
-  if (options.exit) process.exit();
-}
-
-// do something when app is closing
-process.on('exit', exitHandler.bind(null, { cleanup: true }));
-
-// catches ctrl+c event
-process.on('SIGINT', exitHandler.bind(null, { exit: true }));
-
-// catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', exitHandler.bind(null, { exit: true }));
-process.on('SIGUSR2', exitHandler.bind(null, { exit: true }));
-// var stream = createWriteStream("append.txt", {flags:'a'});
-// client.on(PACKETS.event, console.log);
-// client.on(PACKETS.motion, function(...args) {
-//   console.log("MOTION", ...args);
-// });
-// client.on(PACKETS.carSetups, console.log);
-// client.on(PACKETS.lapData, console.log);
-
-// client.on(PACKETS.participants, function(event) {
-//   currentTeam = TEAMS[event?.m_participants?.find(p => p.m_networkId === 0)?.m_teamId]
-// });
-// client.on(PACKETS.session, function(event) {
-//   currentTrack = TRACKS[event?.m_trackId];
-// });
-
-// client.on(PACKETS.carTelemetry, console.log);
-// client.on(PACKETS.carStatus, console.log);
-// client.on(PACKETS.finalClassification, console.log);
-// client.on(PACKETS.lobbyInfo, console.log);
-// client.on(PACKETS.carDamage, console.log);
-// client.on(PACKETS.sessionHistory, console.log);
 
 let lastFrameIdentifier =
-  laps[laps.length - 1]?.lastFrameIdentifier || 1000000000000;
+  laps?.[laps.length - 1]?.lastFrameIdentifier || 1000000000000;
 
-function log(what: string, name: string) {
+function logLapData(what: string, name: string) {
   client.on(what, function (event) {
     const data = event?.m_lapData?.[0];
     const lapNumber = data?.m_currentLapNum;
@@ -490,40 +442,6 @@ function log(what: string, name: string) {
     const currentFrameIdentifier = event?.m_header?.m_frameIdentifier;
     const sector1Time = data?.m_sector1TimeInMS;
     const sector2Time = data?.m_sector2TimeInMS;
-    /* if (sector1Time && sector2Time) {
-      io.sockets.emit("lapTime", {
-        lapValid,
-        time: moment(time * 1000).format("m:ss.SSS"),
-        sector1Time: moment(sector1Time).format("m:ss.SSS"),
-        sector2Time: moment(sector2Time).format("m:ss.SSS"),
-        sector3Time: moment(time * 1000 - (sector1Time + sector2Time)).format(
-          "m:ss.SSS"
-        ),
-        lapNumber,
-        name,
-        previousLapTime,
-        currentFrameIdentifier,
-      });
-    } else if (sector1Time) {
-      io.sockets.emit("lapTime", {
-        lapValid,
-        time: moment(time * 1000).format("m:ss.SSS"),
-        sector1Time: moment(sector1Time).format("m:ss.SSS"),
-        lapNumber,
-        name,
-        previousLapTime,
-        currentFrameIdentifier,
-      });
-    } else {
-      io.sockets.emit("lapTime", {
-        lapValid,
-        time: moment(time * 1000).format("m:ss.SSS"),
-        lapNumber,
-        name,
-        previousLapTime,
-        currentFrameIdentifier,
-      });
-    } */
 
     io.sockets.emit(
       'timer',
@@ -618,13 +536,33 @@ function log(what: string, name: string) {
   });
 }
 
-// log(PACKETS.carTelemetry, "CAR_TELEMATRY");
-// log(PACKETS.session, "SESSION");
+// io.emit("lapData", laps)
+function exitHandler(options: any, exitCode: any) {
+  saveLaps();
+  saveUsers();
+  if (options.cleanup) console.log('clean');
+  if (exitCode || exitCode === 0) console.log(exitCode);
+  if (options.exit) process.exit();
+}
 
+// do something when app is closing
+process.on('exit', exitHandler.bind(null, { cleanup: true }));
+
+// catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, { exit: true }));
+
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', exitHandler.bind(null, { exit: true }));
+process.on('SIGUSR2', exitHandler.bind(null, { exit: true }));
+
+// log(PACKETS.session, "SESSION");
 let interval: null | ReturnType<typeof setInterval> = null;
 
 function start() {
-  log(PACKETS.lapData, 'LAP_DATA');
+  logLapData(PACKETS.lapData, 'LAP_DATA');
+  // log(PACKETS.carTelemetry, "CAR_TELEMATRY");
+  // log(PACKETS.carStatus, "CAR_STATUS");
+  // log(constants.PACKETS., "EVENT");
   interval = setInterval(() => {
     saveLaps();
     saveUsers();
@@ -640,4 +578,4 @@ function stop() {
   client.stop();
 }
 
-export { start, stop, io, client, listOfUsersFormatted };
+export { start, stop, io, client, listOfUsersFormatted, LapResult, saveLaps };
