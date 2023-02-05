@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install
+          yarn install
 
       - name: Publish releases ubuntu
         if: matrix.os == 'ubuntu-latest'
@@ -41,9 +41,9 @@ jobs:
           # This is used for uploading release assets to github
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run postinstall
-          npm run build
-          npm exec electron-builder -- --publish always --linux
+          yarn run postinstall
+          yarn run build
+          yarn exec electron-builder -- --publish always --linux
 
       - name: Publish releases windows
         if: matrix.os == 'windows-latest'
@@ -56,6 +56,6 @@ jobs:
           # This is used for uploading release assets to github
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run postinstall
-          npm run build
-          npm exec electron-builder -- --publish always --win
+          yarn run postinstall
+          yarn run build
+          yarn exec electron-builder -- --publish always --win
